@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kontext-Check: Wann sagt man was?</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #e67e22;
+            --bg-color: #f9f9f9;
+            --success-color: #27ae60;
+            --error-color: #e74c3c;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--primary-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            max-width: 700px;
+            width: 100%;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 10px;
+            font-size: 1.5rem;
+        }
+        .instruction {
+            background: #f0f4f8;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            font-style: italic;
+            text-align: center;
+        }
+        .scenario-card {
+            background: #fff;
+            border: 2px solid #edeff0;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+        .scenario-text {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            display: block;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        .check-btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            color: white;
+            transition: opacity 0.2s;
+            flex: 1;
+            max-width: 150px;
+        }
+        .btn-yes { background-color: var(--success-color); }
+        .btn-no { background-color: var(--error-color); }
+        .check-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        .feedback-area {
+            margin-top: 15px;
+            font-weight: bold;
+            min-height: 50px;
+        }
+        .restart-btn {
+            display: block;
+            margin: 30px auto 0;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Kontext-Check</h1>
+    <p class="instruction">Ist der Ausdruck <strong>"Кого это принесло?"</strong> hier angemessen?</p>
+
+    <div id="quiz-content">
+        <!-- Scenarios will be loaded here -->
+    </div>
+
+    <button class="restart-btn" onclick="resetQuiz()">Übung neu starten</button>
+</div>
+
+<script>
+    const scenarios = [
+        {
+            text: "Ein guter Freund kommt wie verabredet zum gemeinsamen Mittagessen.",
+            correct: false,
+            feedback: "Falsch! Das wäre sehr unhöflich. Hier passt ein einfaches 'Привет!' oder 'Заходи!' besser."
+        },
+        {
+            text: "Es klopft völlig unerwartet um 23:00 Uhr laut an deine Tür.",
+            correct: true,
+            feedback: "Richtig! Hier drückt der Satz genau die passende Überraschung und leichte Irritation aus."
+        },
+        {
+            text: "Du sitzt im Büro und erwartest einen wichtigen Geschäftspartner.",
+            correct: false,
+            feedback: "Falsch! In einem formellen Kontext ist dieser Ausdruck viel zu umgangssprachlich."
+        }
+    ];
+
+    let currentScenario = 0;
+
+    function loadScenario() {
+        const container = document.getElementById('quiz-content');
+        if (currentScenario >= scenarios.length) {
+            container.innerHTML = "<h3>Gut gemacht! Du hast alle Situationen richtig eingeschätzt.</h3>";
+            return;
+        }
+
+        const s = scenarios[currentScenario];
+        container.innerHTML = `
+            <div class="scenario-card">
+                <span class="scenario-text">${s.text}</span>
+                <div class="btn-group">
+                    <button class="check-btn btn-yes" onclick="check(true)">Ja, passt!</button>
+                    <button class="check-btn btn-no" onclick="check(false)">Nein, lieber nicht.</button>
+                </div>
+                <div class="feedback-area" id="fb"></div>
+            </div>
+        `;
+    }
+
+    function check(userAnswer) {
+        const s = scenarios[currentScenario];
+        const fb = document.getElementById('fb');
+        const btns = document.querySelectorAll('.check-btn');
+        
+        btns.forEach(b => b.disabled = true);
+
+        if (userAnswer === s.correct) {
+            fb.innerHTML = `<span style="color: var(--success-color)">${s.feedback}</span>`;
+            setTimeout(() => {
+                currentScenario++;
+                loadScenario();
+            }, 3000);
+        } else {
+            fb.innerHTML = `<span style="color: var(--error-color)">Nicht ganz. Überlege noch einmal...</span>`;
+            setTimeout(() => {
+                btns.forEach(b => b.disabled = false);
+                fb.innerHTML = "";
+            }, 2000);
+        }
+    }
+
+    function resetQuiz() {
+        currentScenario = 0;
+        loadScenario();
+    }
+
+    loadScenario();
+</script>
+
+</body>
+</html>
