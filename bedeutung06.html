@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bedeutungs-Check: Russisch im Alltag</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #e67e22;
+            --bg-color: #f9f9f9;
+            --success-color: #27ae60;
+            --error-color: #e74c3c;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--primary-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 10px;
+            font-size: 1.5rem;
+        }
+        .question-box {
+            margin: 25px 0;
+            font-size: 1.2rem;
+            text-align: center;
+            line-height: 1.5;
+        }
+        .russian-text {
+            display: block;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-top: 10px;
+            font-size: 1.4rem;
+        }
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .option-btn {
+            background: white;
+            border: 2px solid var(--primary-color);
+            padding: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: all 0.2s ease;
+            text-align: left;
+        }
+        .option-btn:hover:not(:disabled) {
+            background-color: #f0f0f0;
+            border-color: var(--accent-color);
+        }
+        .option-btn.correct {
+            background-color: var(--success-color);
+            color: white;
+            border-color: var(--success-color);
+        }
+        .option-btn.wrong {
+            background-color: var(--error-color);
+            color: white;
+            border-color: var(--error-color);
+        }
+        #feedback {
+            margin-top: 25px;
+            text-align: center;
+            font-weight: bold;
+            min-height: 24px;
+            font-size: 1.1rem;
+        }
+        .restart-btn {
+            display: block;
+            margin: 30px auto 0;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Bedeutung verstehen</h1>
+    
+    <div class="question-box">
+        Was meint der Sprecher im Film mit dem Satz:
+        <span class="russian-text">Кого это принесло?</span>
+    </div>
+
+    <div class="options-list" id="options">
+        <button class="option-btn" onclick="checkAnswer(this, 'A')">A: Er fragt ganz sachlich nach dem Namen: „Кто это?“</button>
+        <button class="option-btn" onclick="checkAnswer(this, 'B')">B: Er ist überrascht über den späten Besuch und fragt sich, wer das wohl sein mag.</button>
+        <button class="option-btn" onclick="checkAnswer(this, 'C')">C: Er möchte die Tür nicht öffnen und sagt: „Ich bin nicht da“.</button>
+    </div>
+
+    <div id="feedback"></div>
+
+    <button class="restart-btn" onclick="resetQuiz()">Neustart</button>
+</div>
+
+<script>
+    const feedback = document.getElementById('feedback');
+    const buttons = document.querySelectorAll('.option-btn');
+
+    function checkAnswer(btn, choice) {
+        buttons.forEach(b => b.disabled = true);
+
+        if (choice === 'B') {
+            btn.classList.add('correct');
+            feedback.innerHTML = "Правильно! (Richtig!) <br> Während „Кто это?“ eine neutrale Frage ist, zeigt „Кого это принесло?“ Überraschung über einen unangekündigten Gast.";
+            feedback.style.color = "var(--success-color)";
+        } else {
+            btn.classList.add('wrong');
+            feedback.textContent = "Leider nicht ganz richtig. Überlege, warum er nicht das schlichte „Кто это?“ verwendet.";
+            feedback.style.color = "var(--error-color)";
+            document.querySelector("button[onclick*='B']").style.borderColor = "var(--success-color)";
+        }
+    }
+
+    function resetQuiz() {
+        buttons.forEach(b => {
+            b.disabled = false;
+            b.classList.remove('correct', 'wrong');
+            b.style.borderColor = "var(--primary-color)";
+        });
+        feedback.textContent = "";
+    }
+</script>
+
+</body>
+</html>
