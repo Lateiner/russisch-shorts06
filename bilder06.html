@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch-Training: Wer klopft da?</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #e67e22;
+            --bg-color: #f4f7f6;
+            --success-color: #27ae60;
+            --error-color: #e74c3c;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+            text-align: center;
+        }
+        .progress { font-weight: bold; color: #7f8c8d; margin-bottom: 10px; }
+        
+        .scene-box {
+            width: 100%;
+            height: auto;
+            min-height: 300px;
+            max-height: 450px;
+            border-radius: 12px;
+            position: relative;
+            margin-bottom: 20px;
+            border: 4px solid var(--primary-color);
+            overflow: hidden;
+            background: #eee;
+        }
+        .scene-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* Zeigt das ganze Bild ohne Beschnitt */
+            background: #000;
+        }
+        .speech-bubble {
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 15px 25px;
+            width: 70%;
+            border: 3px solid var(--primary-color);
+            font-weight: bold;
+            font-size: 1.3rem;
+            z-index: 10;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-top: 10px;
+        }
+        .option-btn {
+            background: white;
+            border: 2px solid var(--primary-color);
+            padding: 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: bold;
+            transition: all 0.2s ease;
+        }
+        .option-btn:hover:not(:disabled) {
+            background: #ecf0f1;
+            border-color: var(--accent-color);
+            transform: translateY(-2px);
+        }
+        .option-btn.correct { background: var(--success-color); color: white; border-color: var(--success-color); }
+        .option-btn.wrong { background: var(--error-color); color: white; border-color: var(--error-color); }
+
+        #feedback-text {
+            margin: 15px 0;
+            font-weight: 600;
+            min-height: 24px;
+            font-size: 1.1rem;
+        }
+        
+        .restart-btn {
+            margin-top: 10px;
+            padding: 12px 30px;
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        /* Responsiv-Anpassung für Handys */
+        @media (max-width: 600px) {
+            .scene-box { min-height: 200px; }
+            .speech-bubble { font-size: 1rem; width: 85%; }
+            .option-btn { padding: 12px; font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="progress" id="progress">Situation 1 von 6</div>
+    <h2 id="title">Welcher Satz passt zum Bild?</h2>
+    
+    <div class="scene-box" id="sceneContainer">
+        <img src="" id="currentImage" class="scene-img" alt="Lade Bild...">
+        <div class="speech-bubble" id="bubble">???</div>
+    </div>
+
+    <div id="feedback-text">Wähle eine Antwort:</div>
+    <div class="options-grid" id="optionsArea"></div>
+
+    <button class="restart-btn" onclick="resetGame()">Neustart</button>
+</div>
+
+<script>
+    // Liste der Szenen mit deinen exakten Dateinamen
+    const scenes = [
+        {
+            img: "Nacht. Jemand hämmert aggressiv an die Tür.jpg",
+            context: "Es ist mitten in der Nacht. Das Klopfen ist laut und störend.",
+            options: ["Доброе утро!", "Кого это принесло?", "Как дела?"],
+            correct: 1
+        },
+        {
+            img: "Mittag. Ein Freund klopft höflich an..jpg",
+            context: "Ein ganz normaler Besuch am helllichten Tag.",
+            options: ["Кто это?", "Кого это принесло?", "Пока!"],
+            correct: 0
+        },
+        {
+            img: "Film-Szene. Der Held ist genervt vom Klopfen..jpg",
+            context: "Er arbeitet konzentriert und wird plötzlich unterbrochen.",
+            options: ["Здравствуйте!", "Кого это принесло?", "Спасибо."],
+            correct: 1
+        },
+        {
+            img: "Schule. Du fragst, wer am Lehrerpult sitzt..jpg",
+            context: "Eine sachliche Frage im Unterricht.",
+            options: ["Кто это?", "Кого это принесло?", "Где это?"],
+            correct: 0
+        },
+        {
+            img: "Abend. Du erwartest niemanden und es klingelt.jpg",
+            context: "Es ist schon dunkel. Du bist überrascht über den späten Besuch.",
+            options: ["Я тебя люблю.", "Кого это принесло?", "С добрым утром!"],
+            correct: 1
+        },
+        {
+            img: "Ein Fremder steht vor der Tür und du fragst sachlich..jpg",
+            context: "Du möchtest einfach nur wissen, wer draußen steht.",
+            options: ["Кто это?", "Кого это принесло?", "Приятно познакомиться."],
+            correct: 0
+        }
+    ];
+
+    let currentIdx = 0;
+
+    function initGame() {
+        if (currentIdx >= scenes.length) {
+            showEndScreen();
+            return;
+        }
+
+        const s = scenes[currentIdx];
+        document.getElementById('progress').textContent = `Situation ${currentIdx + 1} von ${scenes.length}`;
+        document.getElementById('currentImage').src = s.img;
+        document.getElementById('bubble').textContent = "???";
+        document.getElementById('feedback-text').textContent = s.context;
+        document.getElementById('feedback-text').style.color = "var(--primary-color)";
+        
+        const area = document.getElementById('optionsArea');
+        area.innerHTML = "";
+        
+        s.options.forEach((opt, i) => {
+            const btn = document.createElement('button');
+            btn.className = "option-btn";
+            btn.textContent = opt;
+            btn.onclick = () => checkAnswer(btn, i);
+            area.appendChild(btn);
+        });
+    }
+
+    function checkAnswer(btn, i) {
+        const s = scenes[currentIdx];
+        const btns = document.querySelectorAll('.option-btn');
+        
+        if (i === s.correct) {
+            btn.classList.add('correct');
+            document.getElementById('bubble').textContent = s.options[i];
+            document.getElementById('feedback-text').textContent = "Richtig! Gut erkannt.";
+            document.getElementById('feedback-text').style.color = "var(--success-color)";
+            
+            btns.forEach(b => b.disabled = true);
+            
+            setTimeout(() => {
+                currentIdx++;
+                initGame();
+            }, 2000);
+        } else {
+            btn.classList.add('wrong');
+            document.getElementById('feedback-text').textContent = "Das passt hier nicht so gut. Versuch es noch mal!";
+            document.getElementById('feedback-text').style.color = "var(--error-color)";
+            
+            setTimeout(() => {
+                btn.classList.remove('wrong');
+            }, 1000);
+        }
+    }
+
+    function showEndScreen() {
+        document.getElementById('progress').textContent = "Geschafft!";
+        document.getElementById('title').textContent = "Hervorragend!";
+        document.getElementById('sceneContainer').innerHTML = "<h2 style='margin-top:100px;'>Du hast alle Situationen korrekt eingeschätzt!</h2>";
+        document.getElementById('optionsArea').innerHTML = "";
+        document.getElementById('feedback-text').textContent = "";
+    }
+
+    function resetGame() {
+        // Lädt die Seite neu, um alles (inkl. Bilder) sauber zurückzusetzen
+        location.reload();
+    }
+
+    // Spielstart
+    window.onload = initGame;
+</script>
+
+</body>
+</html>
