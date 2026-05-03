@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wort-Puzzle: Live-Feedback</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #e67e22;
+            --bg-color: #f9f9f9;
+            --success-color: #27ae60;
+            --error-color: #e74c3c;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--primary-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .progress { font-size: 0.9rem; color: #7f8c8d; margin-bottom: 10px; }
+        h1 { font-size: 1.5rem; border-bottom: 2px solid var(--accent-color); padding-bottom: 10px; }
+        
+        .result-area {
+            font-size: 1.6rem;
+            font-weight: bold;
+            color: var(--accent-color);
+            margin: 20px 0;
+            min-height: 50px;
+            border-bottom: 3px solid #eee;
+            padding-bottom: 10px;
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .puzzle-area {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+            padding: 15px;
+            border: 2px dashed #bdc3c7;
+            border-radius: 10px;
+        }
+
+        .word-tile {
+            background: var(--primary-color);
+            color: white;
+            padding: 10px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1.1rem;
+            transition: all 0.2s;
+        }
+        .word-tile.used { opacity: 0; pointer-events: none; }
+        .word-tile.error { background-color: var(--error-color); transform: shake(0.5s); }
+
+        #feedback { font-weight: bold; min-height: 30px; margin: 15px 0; font-size: 1.1rem; }
+        
+        .restart-btn {
+            padding: 10px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            background: var(--accent-color);
+            color: white;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="progress" id="progressText">Aufgabe 1 von 6</div>
+    <h1>Satzbau mit Live-Feedback</h1>
+    
+    <div class="result-area" id="resultDisplay"></div>
+
+    <div class="puzzle-area" id="wordPool"></div>
+
+    <div id="feedback"></div>
+
+    <button class="restart-btn" onclick="fullReset()">Neustart</button>
+</div>
+
+<script>
+    const tasks = [
+        { correct: ["Кого", "это", "принесло?"], pool: ["это", "принесло?", "Кого"] },
+        { correct: ["Кто", "это", "там?"], pool: ["там?", "Кто", "edit"] }, // Pool wird beim Start gemischt
+        { correct: ["Я", "тебя", "не", "ждал."], pool: ["не", "ждаal.", "Я", "тебя"] },
+        { correct: ["Что", "ты", "тут", "делаешь?"], pool: ["ты", "делаешь?", "Что", "тут"] },
+        { correct: ["Заходи", "скорее", "в", "дом!"], pool: ["в", "дом!", "скорее", "Заходи"] },
+        { correct: ["Мы", "очень", "рады", "тебе."], pool: ["рады", "теbe.", "Мы", "очень"] }
+    ];
+
+    let currentTaskIndex = 0;
+    let selectedWords = [];
+
+    function initTask() {
+        if (currentTaskIndex >= tasks.length) {
+            document.getElementById('progressText').textContent = "Fertig!";
+            document.getElementById('wordPool').innerHTML = "<h3>Hervorragend! Alle Sätze sitzen.</h3>";
+            document.getElementById('resultDisplay').textContent = "";
+            return;
+        }
+
+        const task = tasks[currentTaskIndex];
+        document.getElementById('progressText').textContent = `Aufgabe ${currentTaskIndex + 1} von ${tasks.length}`;
+        const poolElement = document.getElementById('wordPool');
+        poolElement.innerHTML = '';
+        selectedWords = [];
+        updateDisplay();
+        document.getElementById('feedback').textContent = '';
+
+        // Wörter für den Pool mischen
+        const shuffledPool = [...task.correct].sort(() => Math.random() - 0.5);
+
+        shuffledPool.forEach(word => {
+            const tile = document.createElement('div');
+            tile.className = 'word-tile';
+            tile.textContent = word;
+            tile.onclick = () => handleWordClick(word, tile);
+            poolElement.appendChild(tile);
+        });
+    }
+
+    function handleWordClick(word, tile) {
+        const task = tasks[currentTaskIndex];
+        const expectedWord = task.correct[selectedWords.length];
+
+        if (word === expectedWord) {
+            // Richtiges Wort gewählt
+            selectedWords.push(word);
+            tile.classList.add('used');
+            document.getElementById('feedback').textContent = "Gut!";
+            document.getElementById('feedback').style.color = "var(--success-color)";
+            updateDisplay();
+
+            // Prüfen ob Satz fertig
+            if (selectedWords.length === task.correct.length) {
+                document.getElementById('feedback').textContent = "Satz komplett!";
+                setTimeout(() => {
+                    currentTaskIndex++;
+                    initTask();
+                }, 1200);
+            }
+        } else {
+            // Falsches Wort gewählt
+            tile.classList.add('error');
+            document.getElementById('feedback').textContent = "Hoppla, das passt hier nicht.";
+            document.getElementById('feedback').style.color = "var(--error-color)";
+            
+            setTimeout(() => {
+                tile.classList.remove('error');
+            }, 500);
+        }
+    }
+
+    function updateDisplay() {
+        document.getElementById('resultDisplay').textContent = selectedWords.join(' ');
+    }
+
+    function fullReset() {
+        currentTaskIndex = 0;
+        initTask();
+    }
+
+    initTask();
+</script>
+
+</body>
+</html>
