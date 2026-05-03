@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch-Training: Das Stimmungsthermometer</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #e67e22;
+            --bg: #f0f2f5;
+            --neutral: #95a5a6;
+            --joy: #f1c40f;
+            --annoyed: #e74c3c;
+            --success: #27ae60;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            padding: 10px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 650px;
+            width: 100%;
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            margin-bottom: 15px;
+        }
+
+        .progress-bar {
+            font-size: 0.9rem;
+            color: var(--neutral);
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .scene-img-container {
+            width: 100%;
+            height: 300px;
+            border-radius: 15px;
+            overflow: hidden;
+            border: 3px solid var(--primary);
+            background: #000;
+            margin-bottom: 15px;
+        }
+
+        .scene-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .instruction {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 10px;
+            min-height: 3em;
+        }
+
+        /* Schieberegler Design */
+        .slider-box {
+            margin: 25px 0;
+            padding: 0 10px;
+        }
+
+        #status-emoji {
+            font-size: 3.5rem;
+            display: block;
+            margin-bottom: 10px;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .range-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 12px;
+            border-radius: 10px;
+            background: linear-gradient(to right, var(--joy), var(--neutral), var(--annoyed));
+            outline: none;
+        }
+
+        .range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: var(--primary);
+            border: 4px solid white;
+            cursor: pointer;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+        }
+
+        .labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-weight: bold;
+            font-size: 0.85rem;
+        }
+
+        .feedback-area {
+            min-height: 80px;
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #feedback-text {
+            font-size: 1.05rem;
+            font-weight: 600;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .main-btn {
+            flex: 1;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .main-btn:hover { background: var(--accent); }
+        .main-btn:disabled { background: var(--neutral); cursor: not-allowed; }
+
+        /* Responsivität */
+        @media (max-width: 500px) {
+            .scene-img-container { height: 200px; }
+            #status-emoji { font-size: 2.8rem; }
+            .instruction { font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <div class="progress-bar" id="progress">Situation 1 von 6</div>
+        <div class="instruction" id="instruction">Lade Szene...</div>
+    </div>
+
+    <div class="scene-img-container">
+        <img src="" id="sceneImg" class="scene-img" alt="Szene">
+    </div>
+
+    <div class="slider-box">
+        <span id="status-emoji">😐</span>
+        <input type="range" min="1" max="100" value="50" class="range-slider" id="moodSlider">
+        <div class="labels">
+            <span style="color: var(--joy)">😊 Erfreut</span>
+            <span style="color: var(--neutral)">Neutral</span>
+            <span style="color: var(--annoyed)">😫 Genervt</span>
+        </div>
+    </div>
+
+    <div class="feedback-area">
+        <div id="feedback-text">Bewege den Regler!</div>
+    </div>
+
+    <div class="btn-group">
+        <button class="main-btn" id="actionBtn" onclick="handleAction()">Einschätzung prüfen</button>
+    </div>
+</div>
+
+<script>
+    const scenes = [
+        {
+            img: "Film-Szene. Der Held ist genervt vom Klopfen..jpg",
+            text: "Der Held wird bei der Arbeit gestört. Wie reagiert er auf das Klopfen?",
+            target: "annoyed", // 70-100
+            feedback: "Richtig! Er ist extrem genervt und nutzt den Ausdruck sarkastisch."
+        },
+        {
+            img: "Mittag. Ein Freund klopft höflich an..jpg",
+            text: "Ein guter Freund kommt mittags vorbei. Wie ist die Stimmung?",
+            target: "neutral", // 30-70
+            feedback: "Genau. Eine normale, sachliche Situation. Hier passt ein neutrales 'Wer ist da?'"
+        },
+        {
+            img: "Nacht. Jemand hämmert aggressiv an die Tür.jpg",
+            text: "Jemand hämmert mitten in der Nacht gegen die Tür. Dein Gefühl?",
+            target: "annoyed",
+            feedback: "Absolut. Das aggressive Hämmern löst Ärger oder Misstrauen aus."
+        },
+        {
+            img: "Schule. Du fragst, wer am Lehrerpult sitzt..jpg",
+            text: "Du betrittst den Raum und fragst höflich, wer dort sitzt.",
+            target: "neutral",
+            feedback: "Richtig. In der Schule bleibt man sachlich und höflich."
+        },
+        {
+            img: "Abend. Du erwartest niemanden und es klingelt.jpg",
+            text: "Es ist spät, du bist müde und plötzlich klingelt es. Wie fühlst du dich?",
+            target: "annoyed",
+            feedback: "Treffer. Das unerwartete Stören am Abend sorgt meist für Unmut."
+        },
+        {
+            img: "Ein Fremder steht vor der Tür und du fragst sachlich..jpg",
+            text: "Ein Unbekannter steht draußen. Du möchtest einfach nur Informationen.",
+            target: "neutral",
+            feedback: "Korrekt. Eine neutrale Informationsabfrage ohne Vorwurf."
+        }
+    ];
+
+    let currentIdx = 0;
+    let isChecked = false;
+
+    const slider = document.getElementById('moodSlider');
+    const emoji = document.getElementById('status-emoji');
+    const feedback = document.getElementById('feedback-text');
+    const actionBtn = document.getElementById('actionBtn');
+
+    function updateEmoji(val) {
+        if (val < 35) {
+            emoji.textContent = "😊";
+            emoji.style.transform = `scale(${1 + (35-val)/100})`;
+        } else if (val > 65) {
+            emoji.textContent = "😫";
+            emoji.style.transform = `scale(${1 + (val-65)/100})`;
+        } else {
+            emoji.textContent = "😐";
+            emoji.style.transform = "scale(1)";
+        }
+    }
+
+    slider.addEventListener('input', (e) => {
+        if(!isChecked) {
+            updateEmoji(e.target.value);
+            feedback.textContent = "Bewege den Regler!";
+            feedback.style.color = "var(--primary)";
+        }
+    });
+
+    function loadScene() {
+        const s = scenes[currentIdx];
+        document.getElementById('progress').textContent = `Situation ${currentIdx + 1} von ${scenes.length}`;
+        document.getElementById('instruction').textContent = s.text;
+        document.getElementById('sceneImg').src = s.img;
+        slider.value = 50;
+        updateEmoji(50);
+        feedback.textContent = "Bewege den Regler!";
+        feedback.style.color = "var(--primary)";
+        actionBtn.textContent = "Einschätzung prüfen";
+        isChecked = false;
+        slider.disabled = false;
+    }
+
+    function handleAction() {
+        if (!isChecked) {
+            checkResult();
+        } else {
+            currentIdx++;
+            if (currentIdx < scenes.length) {
+                loadScene();
+            } else {
+                showFinish();
+            }
+        }
+    }
+
+    function checkResult() {
+        const val = parseInt(slider.value);
+        const target = scenes[currentIdx].target;
+        let success = false;
+
+        if (target === "annoyed" && val > 65) success = true;
+        if (target === "neutral" && val >= 35 && val <= 65) success = true;
+        if (target === "joy" && val < 35) success = true;
+
+        if (success) {
+            feedback.textContent = scenes[currentIdx].feedback;
+            feedback.style.color = "var(--success)";
+            isChecked = true;
+            slider.disabled = true;
+            actionBtn.textContent = "Nächste Szene";
+        } else {
+            feedback.textContent = "Noch nicht ganz. Schau dir die Situation nochmal genau an!";
+            feedback.style.color = "var(--annoyed)";
+        }
+    }
+
+    function showFinish() {
+        document.querySelector('.header').innerHTML = "<h1>Glückwunsch!</h1>";
+        document.querySelector('.scene-img-container').innerHTML = "<div style='display:flex; height:100%; align-items:center; justify-content:center; font-size:5rem;'>🏆</div>";
+        document.querySelector('.slider-box').style.display = "none";
+        feedback.textContent = "Du hast ein exzellentes Gespür für die russischen Nuancen bewiesen!";
+        actionBtn.textContent = "Erneut starten";
+        actionBtn.onclick = () => location.reload();
+    }
+
+    // Start
+    window.onload = loadScene;
+</script>
+
+</body>
+</html>
