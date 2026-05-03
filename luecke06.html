@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lückentext: Die richtige Nuance wählen</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --success: #27ae60;
+            --error: #e74c3c;
+            --bg: #f8f9fa;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 700px;
+            width: 100%;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .header-img {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 2px solid var(--primary);
+        }
+
+        h2 { color: var(--primary); text-align: center; margin-top: 0; }
+        
+        .story-text {
+            line-height: 2;
+            font-size: 1.15rem;
+            color: #333;
+            text-align: justify;
+        }
+
+        /* Dropdown Styling */
+        .drop {
+            appearance: none;
+            background-color: #fff;
+            border: 2px solid var(--accent);
+            border-radius: 5px;
+            padding: 2px 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--accent);
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 0 5px;
+        }
+
+        .drop:focus { outline: none; border-color: var(--primary); }
+        .drop.correct { border-color: var(--success); color: var(--success); background-color: #e8f5e9; }
+        .drop.wrong { border-color: var(--error); color: var(--error); background-color: #ffebee; }
+
+        .check-area {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn:hover { background-color: var(--accent); }
+
+        #result-msg {
+            margin-top: 20px;
+            font-weight: bold;
+            min-height: 24px;
+        }
+
+        /* Responsive Anpassungen */
+        @media (max-width: 600px) {
+            .story-text { font-size: 1rem; line-height: 2.2; }
+            .header-img { height: 180px; }
+            .drop { padding: 1px 5px; font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Analysiere die Film-Szene</h2>
+    
+    <!-- Kontextbild für die Aufgabe -->
+    <img src="Film-Szene. Der Held ist genervt vom Klopfen..jpg" alt="Film-Szene" class="header-img">
+
+    <div class="story-text">
+        Unser Held sitzt konzentriert an seinem Schreibtisch. Plötzlich klopft es laut an der Tür. Er ist sichtlich genervt von der Störung. 
+        Statt einfach zu fragen: „
+        <select class="drop" data-answer="Кто">
+            <option value="">...</option>
+            <option value="Что">Что</option>
+            <option value="Кто">Кто</option>
+            <option value="Где">Где</option>
+        </select> 
+        это?“, benutzt er einen viel emotionaleren Ausdruck. 
+        Er ruft laut aus: „Кого это 
+        <select class="drop" data-answer="принесло">
+            <option value="">...</option>
+            <option value="пришло">пришло</option>
+            <option value="принесло">принесло</option>
+            <option value="приехало">приехало</option>
+        </select> 
+        ?!“. Damit drückt er aus, dass er den Besuch in diesem Moment für völlig 
+        <select class="drop" data-answer="unpassend">
+            <option value="">...</option>
+            <option value="passend">passend</option>
+            <option value="erfreulich">erfreulich</option>
+            <option value="unpassend">unpassend</option>
+        </select> 
+        hält. Es klingt fast so, als hätte der Wind den Fremden wie ein lästiges Objekt „herbeigebracht“.
+    </div>
+
+    <div class="check-area">
+        <button class="btn" onclick="checkAnswers()">Prüfen</button>
+        <div id="result-msg"></div>
+    </div>
+</div>
+
+<script>
+    function checkAnswers() {
+        const selects = document.querySelectorAll('.drop');
+        let allCorrect = true;
+        let countCorrect = 0;
+
+        selects.forEach(select => {
+            const selectedValue = select.value;
+            const correctAnswer = select.getAttribute('data-answer');
+
+            if (selectedValue === correctAnswer) {
+                select.className = 'drop correct';
+                countCorrect++;
+            } else {
+                select.className = 'drop wrong';
+                allCorrect = false;
+            }
+        });
+
+        const msg = document.getElementById('result-msg');
+        if (allCorrect) {
+            msg.textContent = "Hervorragend! Du hast die Nuancen der Szene perfekt verstanden. 🎉";
+            msg.style.color = "var(--success)";
+        } else {
+            msg.textContent = `Du hast ${countCorrect} von ${selects.length} richtig. Versuch es noch einmal!`;
+            msg.style.color = "var(--error)";
+        }
+    }
+
+    // Zurücksetzen der Farben beim Ändern der Auswahl
+    document.querySelectorAll('.drop').forEach(select => {
+        select.addEventListener('change', () => {
+            select.className = 'drop';
+            document.getElementById('result-msg').textContent = "";
+        });
+    });
+</script>
+
+</body>
+</html>
