@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch-Lerneinheit: Interaktives Hörverstehen</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #e67e22;
+            --bg-color: #f9f9f9;
+            --success-color: #27ae60;
+            --error-color: #e74c3c;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--primary-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 10px;
+        }
+        .instruction {
+            margin-bottom: 30px;
+            line-height: 1.6;
+            background: #fff8f0;
+            padding: 15px;
+            border-left: 5px solid var(--accent-color);
+        }
+        .game-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        @media (min-width: 600px) {
+            .game-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        .drop-zone {
+            border: 3px dashed #bdc3c7;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            min-height: 180px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+            background: #fff;
+        }
+        .drop-zone.hover {
+            border-color: var(--accent-color);
+            background: #fef5e7;
+        }
+        .audio-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-bottom: 15px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+        .audio-btn:hover {
+            background-color: #34495e;
+        }
+        .options-box {
+            background: #ecf0f1;
+            padding: 20px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            min-height: 60px;
+        }
+        .draggable {
+            background: white;
+            border: 2px solid var(--primary-color);
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: grab;
+            font-weight: bold;
+            font-size: 1.2rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            user-select: none;
+            touch-action: none;
+        }
+        #feedback {
+            margin-top: 20px;
+            font-weight: bold;
+            text-align: center;
+            min-height: 24px;
+        }
+        .correct { color: var(--success-color); }
+        .wrong { color: var(--error-color); }
+
+        .restart-btn {
+            display: block;
+            margin: 30px auto 0;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: opacity 0.2s;
+        }
+        .restart-btn:hover {
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Russisch Interaktiv: Wer klopft da?</h1>
+    
+    <div class="instruction">
+        <strong>Anleitung:</strong> Höre dir die beiden Klopfgeräusche an. 
+        Welcher russische Satz passt zur jeweiligen Situation? 
+        Ziehe den Text in das Feld oder klicke erst den Text und dann das Feld an.
+    </div>
+
+    <div class="game-grid">
+        <div class="drop-zone" id="zone-normal" data-target="normal">
+            <button class="audio-btn" onclick="playSound('A_quiet_knock_in_the_afternoon')">
+                <span>🔊</span> Situation 1 hören
+            </button>
+            <p>Ruhiges Klopfen</p>
+        </div>
+
+        <div class="drop-zone" id="zone-surprise" data-target="surprise">
+            <button class="audio-btn" onclick="playSound('Frantic_and_loud_at_11_00_p.')">
+                <span>🔊</span> Situation 2 hören
+            </button>
+            <p>Hektisches Hämmern</p>
+        </div>
+    </div>
+
+    <div class="options-box" id="options">
+        <div class="draggable" draggable="true" id="drag-surprise" data-type="surprise">Кого это принесло?</div>
+        <div class="draggable" draggable="true" id="drag-normal" data-type="normal">Кто это?</div>
+    </div>
+
+    <div id="feedback"></div>
+
+    <button class="restart-btn" onclick="resetGame()">Neustart</button>
+</div>
+
+<script>
+    // Audio-Funktion
+    function playSound(fileNameBase) {
+        const extensions = ['.wav', ''];
+        function tryPlay(index) {
+            if (index >= extensions.length) {
+                alert("Audio-Datei nicht gefunden!");
+                return;
+            }
+            const audio = new Audio(fileNameBase + extensions[index]);
+            audio.play().catch(() => tryPlay(index + 1));
+        }
+        tryPlay(0);
+    }
+
+    const optionsBox = document.getElementById('options');
+    const feedback = document.getElementById('feedback');
+    let selectedItem = null;
+
+    function setupDraggables() {
+        const draggables = document.querySelectorAll('.draggable');
+        draggables.forEach(draggable => {
+            draggable.addEventListener('dragstart', () => draggable.classList.add('dragging'));
+            draggable.addEventListener('dragend', () => draggable.classList.remove('dragging'));
+            
+            // Klick-Logik für mobile Endgeräte
+            draggable.addEventListener('click', () => {
+                if (draggable.getAttribute('draggable') === 'false') return;
+                if (selectedItem) selectedItem.style.border = "2px solid var(--primary-color)";
+                selectedItem = draggable;
+                draggable.style.border = "3px solid var(--accent-color)";
+                feedback.textContent = "Ausgewählt. Klicke jetzt auf das passende Feld.";
+                feedback.className = "";
+            });
+        });
+    }
+
+    setupDraggables();
+
+    const zones = document.querySelectorAll('.drop-zone');
+    zones.forEach(zone => {
+        zone.addEventListener('dragover', e => {
+            e.preventDefault();
+            zone.classList.add('hover');
+        });
+        zone.addEventListener('dragleave', () => zone.classList.remove('hover'));
+        zone.addEventListener('drop', e => {
+            e.preventDefault();
+            zone.classList.remove('hover');
+            const draggingItem = document.querySelector('.dragging');
+            if (!draggingItem) return;
+            handleMatch(draggingItem, zone);
+        });
+
+        zone.addEventListener('click', () => {
+            if (selectedItem) {
+                handleMatch(selectedItem, zone);
+                selectedItem.style.border = "2px solid var(--primary-color)";
+                selectedItem = null;
+            }
+        });
+    });
+
+    function handleMatch(item, zone) {
+        const itemType = item.getAttribute('data-type');
+        const zoneTarget = zone.getAttribute('data-target');
+
+        if (itemType === zoneTarget) {
+            zone.appendChild(item);
+            item.setAttribute('draggable', 'false');
+            item.style.cursor = 'default';
+            feedback.textContent = "Richtig! Gut gemacht.";
+            feedback.className = "correct";
+        } else {
+            feedback.textContent = "Das passt nicht zur Situation.";
+            feedback.className = "wrong";
+        }
+    }
+
+    function resetGame() {
+        const dragSurprise = document.getElementById('drag-surprise');
+        const dragNormal = document.getElementById('drag-normal');
+        
+        // Sätze zurück in die Options-Box
+        optionsBox.appendChild(dragSurprise);
+        optionsBox.appendChild(dragNormal);
+        
+        // Status zurücksetzen
+        [dragSurprise, dragNormal].forEach(item => {
+            item.setAttribute('draggable', 'true');
+            item.style.cursor = 'grab';
+            item.style.border = "2px solid var(--primary-color)";
+        });
+        
+        feedback.textContent = "";
+        feedback.className = "";
+        selectedItem = null;
+    }
+</script>
+
+</body>
+</html>
